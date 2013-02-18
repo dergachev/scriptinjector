@@ -1,3 +1,10 @@
+# scriptinject.github.com
+
+Various trickery to download a page and inject a javascript script tag into it.
+Used for previewing bookmarklets and content scripts.
+
+## htmlpreview.github.com docs
+
 Many GitHub repositories don't use GitHub Pages to host their HTML files. GitHub HTML Preview allows you to render those files without cloning or downloading whole repositories.
 
 If you try to open raw versions of any HTML, CSS or JS files in a web browser directly from GitHub, all you will see are sources. GitHub forces them to use the "text/plain" content-type. This script overrides it by using Yahoo! Query Language.
