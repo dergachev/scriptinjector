@@ -4,12 +4,32 @@ var HTMLPreview = {
 
 	previewform: document.getElementById('previewform'),
 
+  // from http://stackoverflow.com/a/5448635/9621
+  extractUrlParam: function (name) {
+    var prmstr = window.location.search.substr(1);
+    var prmarr = prmstr.split ("&");
+    var params = {};
+
+    for ( var i = 0; i < prmarr.length; i++) {
+          var tmparr = prmarr[i].split("=");
+              params[tmparr[0]] = tmparr[1];
+    }
+    return params[name];
+  },
+
 	file: function() {
-		return location.search.substring(1); //Get everything after the ?
+		return this.extractUrlParam('page'); // 
+    // return location.search.substring(1); //Get everything after the ?
+	},
+
+	script: function() {
+		return this.extractUrlParam('script'); // 
+    // return location.search.substring(1); //Get everything after the ?
 	},
 
 	raw: function() {
-		return this.file().replace(/\/\/github\.com/,'//raw.github.com').replace(/\/blob\//,'/'); //Get URL of the raw file
+		// return this.file().replace(/\/\/github\.com/,'//raw.github.com').replace(/\/blob\//,'/'); //Get URL of the raw file
+    return this.file();
 	},
 
 	folder: function() {
@@ -63,6 +83,14 @@ var HTMLPreview = {
 		}
 	},
 
+  injectScripts: function(content) {
+			this.content = content
+        .replace(/<head>/i,'<head><base href="'+this.folder()+'">')
+        .replace(/<\/body>/i,'<script src="' + location.origin + location.pathname + '/scriptinjector.js"></script><script>HTMLPreview.replaceAssets();</script></body>')
+        .replace(/<\/body>/i,'<script src="' + this.script() + '"></script><script>HTMLPreview.replaceAssets();</script></body>')
+        .replace(/<\/head>\s*<frameset/gi,'<script src="' + location.origin + location.pathname + '/scriptinjector.js"></script><script>document.addEventListener("DOMContentLoaded",HTMLPreview.replaceAssets,false);</script></head><frameset'); 
+  },
+
 	loadHTML: function(data) {
 		if(data
 		&& data.query
@@ -70,7 +98,9 @@ var HTMLPreview = {
 		&& data.query.results.resources
 		&& data.query.results.resources.content
 		&& data.query.results.resources.status == 200) {
-			this.content = data.query.results.resources.content.replace(/<head>/i,'<head><base href="'+this.folder()+'">').replace(/<\/body>/i,'<script src="http://' + location.hostname + '/htmlpreview.min.js"></script><script>HTMLPreview.replaceAssets();</script></body>').replace(/<\/head>\s*<frameset/gi,'<script src="http://' + location.hostname + '/htmlpreview.min.js"></script><script>document.addEventListener("DOMContentLoaded",HTMLPreview.replaceAssets,false);</script></head><frameset'); //Add <base> just after <head> and inject <script> just before </body> or </head> if <frameset>
+      //Add <base> just after <head> and inject <script> just before </body> or </head> if <frameset>
+			this.injectScripts(data.query.results.resources.content);
+			// this.content = data.query.results.resources.content.replace(/<head>/i,'<head><base href="'+this.folder()+'">').replace(/<\/body>/i,'<script src="' + location.origin + '/scriptinjector.js"></script><script>HTMLPreview.replaceAssets();</script></body>').replace(/<\/head>\s*<frameset/gi,'<script src="' + location.origin + '/scriptinjector.js"></script><script>document.addEventListener("DOMContentLoaded",HTMLPreview.replaceAssets,false);</script></head><frameset'); 
 			setTimeout(function() {
 				document.open();
 				document.write(HTMLPreview.content);
@@ -113,7 +143,7 @@ var HTMLPreview = {
 	},
 
 	submitform: function() {
-		location.href = '/?' + document.getElementById('file').value;
+		location.href = location.pathname + '/?script=' + document.getElementById('script') + '&page=' + document.getElementById('file').value;
 		return false;
 	},
 
